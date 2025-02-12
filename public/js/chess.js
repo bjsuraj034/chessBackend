@@ -25,17 +25,17 @@ const renderBoard=()=>{
             {
                 const   pieceElement=document.createElement("div");
                 pieceElement.classList.add("piece",square.color==="w" ? "white" :"black");
-                pieceElement.innerHTML="";
+                pieceElement.innerText=getPieces(square)
                 pieceElement.draggable=playerRole===square.color;
 
-                pieceElement.addEventListener("dragstart",()=>{
-                    if(pieceElement.draggable)
-                    {
-                        draggedPiece=pieceElement;
-                        sourceSquare={row:rowIndex,col:squareindex}
-                        e.dataTransfer.setData("text/plain","")
+                pieceElement.addEventListener("dragstart", (e) => {
+                    if (pieceElement.draggable) {
+                        draggedPiece = pieceElement;
+                        sourceSquare = { row: rowIndex, col: squareindex };
+                        e.dataTransfer.setData("text/plain", ""); 
                     }
-                })
+                });
+                
                 pieceElement.addEventListener("dragend",(e)=>{draggedPiece=null
                     sourceSquare=null;
                 });
@@ -56,9 +56,62 @@ const renderBoard=()=>{
                     handleMove(sourceSquare,targetSource)
                 }
             })
+            boardElement.appendChild(squareElement)
 
         })
         
     })
+    if(playerRole==='b')
+    {
+        boardElement.classList.add("flipped")
+    }
+    else{
+
+        boardElement.classList.remove("flipped")
+    }
 }
+
+const getPieces=(piece)=>{
+
+     const unicodePieces={
+        p:"♙",
+        r:"♜",
+        n:"♞",
+        b:"♝",
+        q:"♛",
+        k:"♚",
+        P:"♙",
+        R:"♖",
+        N:"♘",
+        B:"♗",
+        Q:"♕",
+        K:"♚"  
+    }
+    return unicodePieces[piece.type] || "";
+}
+
+const handleMove=(source,target)=>{
+    const move = {
+        from: `${String.fromCharCode(97 + source.col)}${8 - source.row}`,
+        to: `${String.fromCharCode(97 + target.col)}${8 - target.row}`,
+        promotion: "q" // Always promote to queen for now
+    };    
+    socket.emit("move",move)
+}
+
+socket.on("playerRole",function(role){
+    playerRole=role;
+    renderBoard()
+})
+socket.on("spectatorRole",function(){
+    playerRole=null;
+    renderBoard()
+})
+socket.on("boardState",function(fen)
+{
+    chess.load(fen)
+    renderBoard();
+
+})
+
 renderBoard()
